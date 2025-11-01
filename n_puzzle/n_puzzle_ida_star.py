@@ -43,13 +43,13 @@ def get_neighbors(board, zero_idx, n):
     moves = [(-1, 0, "down"), (1, 0, "up"), (0, -1, "right"), (0, 1, "left")]
     neighbors = []
 
-    x0, y0 = divmod(zero_idx, n)
+    x0, y0 = divmod(zero_idx, n) # конвертиране на текущия индекс на 0-лата в координати
     for dx, dy, move in moves:
         x, y = x0 + dx, y0 + dy
         if 0 <= x < n and 0 <= y < n:
-            new_idx = x * n + y
+            new_idx = x * n + y # конвертиране на новите координати на 0-лата в индекс
             new_board = list(board)
-            new_board[zero_idx], new_board[new_idx] = new_board[new_idx], new_board[zero_idx]
+            new_board[zero_idx], new_board[new_idx] = new_board[new_idx], new_board[zero_idx] # сменяме двете плочки
             neighbors.append((tuple(new_board), new_idx, move))
     return neighbors
 
@@ -122,10 +122,10 @@ def main():
     start = tuple(tiles)
 
     # генерираме целевото състояние
-    goal = list(range(1, N + 1)) + [0]
-    if I != -1:
-        goal[I], goal[-1] = goal[-1], goal[I]
-    goal = tuple(goal)
+    if I == -1:
+        goal = tuple(list(range(1, N + 1)) + [0])
+    else:
+        goal = tuple(list(range(1, I+1)) + [0] + list(range(I + 1, N + 1)))
 
     goal_positions = {tile: i for i, tile in enumerate(goal)}
     zero_pos = start.index(0)

@@ -1,104 +1,125 @@
 import random
+import sys
 import time
 
-def print_board_state(queenPosition):
-    n = len(queenPosition)
-    for r in range(n):
-        row_str = ["*" if queenPosition[c] == r else "_" for c in range(n)]
-        print(" ".join(row_str))
+DEBUG = False  # <- Включи само за ръчно тестване
+
+def initialise_data(n):
+    queens = [0] * n
+    queens_per_row = [0] * n
+    diag1 = [0] * (2 * n - 1)
+    diag2 = [0] * (2 * n - 1)
+    return queens, queens_per_row, diag1, diag2
 
 
-def count_conflicts(row, col, n, conflictRows, conflictPosDiag, conflictNegDiag):
-    """O(1) изчисляване на броя конфликти за дадена позиция."""
-    return (
-        conflictRows[row]
-        + conflictPosDiag[row + col]
-        + conflictNegDiag[n - 1 - row + col]
-        - 3  # изваждаме собствената царица
-    )
+def arrange_queens_on_board(n, queens, queens_per_row, diag1, diag2):
+    col = 1
+    for row in range(n):
+        queens[col] = row
+        queens_per_row[row] += 1
+        diag1[col - row + n - 1] += 1
+        diag2[col + row] += 1
+        col += 2
+        if col >= n:
+            col = 0
 
 
-def solve_n_queens(n, print_board=False, measure_time=True, max_steps=1000000):
-    if n in (2, 3):
-        return -1
+def retrieve_conflicts(row, col, queens_per_row, diag1, diag2, n):
+    return queens_per_row[row] + diag1[col - row + n - 1] + diag2[col + row]
 
-    start_time = time.time()
 
-    # --- Инициализация ---
-    queenPosition = [random.randint(0, n - 1) for _ in range(n)]
-    conflictRows = [0] * n
-    conflictPosDiag = [0] * (2 * n - 1)
-    conflictNegDiag = [0] * (2 * n - 1)
-
-    # Попълваме конфликтните броячи
+def get_column_with_max_conflict(n, queens, queens_per_row, diag1, diag2):
+    max_conf = -1
+    cols = []
     for col in range(n):
-        row = queenPosition[col]
-        conflictRows[row] += 1
-        conflictPosDiag[row + col] += 1
-        conflictNegDiag[n - 1 - row + col] += 1
-
-    # --- Главен цикъл ---
-    for _ in range(max_steps):
-        conflicted_cols = []
-        for col in range(n):
-            row = queenPosition[col]
-            if (
-                conflictRows[row]
-                + conflictPosDiag[row + col]
-                + conflictNegDiag[n - 1 - row + col]
-                > 3
-            ):
-                conflicted_cols.append(col)
-
-        if not conflicted_cols:
-            # Намерено решение
-            elapsed = time.time() - start_time
-            if measure_time:
-                print(f"⏱ Време за решаване: {elapsed:.5f} секунди")
-
-            if print_board and n <= 30:
-                print_board_state(queenPosition)
-
-            return queenPosition
-
-        # Избираме случайна конфликтна колона
-        col = random.choice(conflicted_cols)
-        current_row = queenPosition[col]
-
-        # Премахваме временно текущата царица
-        conflictRows[current_row] -= 1
-        conflictPosDiag[current_row + col] -= 1
-        conflictNegDiag[n - 1 - current_row + col] -= 1
-
-        # Намираме ред с минимален конфликт
-        min_conf = float("inf")
-        best_rows = []
-        for row in range(n):
-            conf = (
-                conflictRows[row]
-                + conflictPosDiag[row + col]
-                + conflictNegDiag[n - 1 - row + col]
-            )
-            if conf < min_conf:
-                min_conf = conf
-                best_rows = [row]
-            elif conf == min_conf:
-                best_rows.append(row)
-
-        new_row = random.choice(best_rows)
-        queenPosition[col] = new_row
-
-        # Актуализираме конфликтните масиви
-        conflictRows[new_row] += 1
-        conflictPosDiag[new_row + col] += 1
-        conflictNegDiag[n - 1 - new_row + col] += 1
-
-    # Ако не намери решение за max_steps
-    return -1
+        row = queens[col]
+        current_conf = retrieve_conflicts(row, col, queens_per_row, diag1, diag2, n) - 3
+        if current_conf == max_conf:
+            cols.append(col)
+        elif current_conf > max_conf:
+            max_conf = current_conf
+            cols = [col]
+    if max_conf == 0:
+        return -1
+    return random.choice(cols)
 
 
-# ==== Примерна употреба ====
+def get_row_with_min_conflicts(n, col, queens, queens_per_row, diag1, diag2):
+    min_conf = float("inf")
+    best_rows = []
+    for row in range(n):
+        conf = retrieve_conflicts(row, col, queens_per_row, diag1, diag2, n)
+        if queens[col] == row:
+            conf -= 3
+        if conf == min_conf:
+            best_rows.append(row)
+        elif conf < min_conf:
+            min_conf = conf
+            best_rows = [row]
+    return random.choice(best_rows)
+
+
+def update_arrays(new_row, col, queens, queens_per_row, diag1, diag2, n):
+    old_row = queens[col]
+    queens_per_row[old_row] -= 1
+    diag1[col - old_row + n - 1] -= 1
+    diag2[col + old_row] -= 1
+    queens[col] = new_row
+    queens_per_row[new_row] += 1
+    diag1[col - new_row + n - 1] += 1
+    diag2[col + new_row] += 1
+
+
+def solve_queens_board(n, queens, queens_per_row, diag1, diag2, max_steps=10_000):
+    iteration = 0
+    while iteration <= max_steps:
+        iteration += 1
+        col = get_column_with_max_conflict(n, queens, queens_per_row, diag1, diag2)
+        if col == -1:
+            return True
+        new_row = get_row_with_min_conflicts(n, col, queens, queens_per_row, diag1, diag2)
+        update_arrays(new_row, col, queens, queens_per_row, diag1, diag2, n)
+    return False
+
+
+def main():
+    n = int(sys.stdin.readline().strip())
+    if n == 1:
+        print("[0]")
+        return
+    if n in (2, 3):
+        print(-1)
+        return
+
+    start = time.time()
+
+    success = False
+    for attempt in range(50):  # до 50 рестарта
+        queens, queens_per_row, diag1, diag2 = initialise_data(n)
+        if attempt % 2 == 0:
+            arrange_queens_on_board(n, queens, queens_per_row, diag1, diag2)
+        else:
+            for col in range(n):
+                row = random.randint(0, n - 1)
+                queens[col] = row
+                queens_per_row[row] += 1
+                diag1[col - row + n - 1] += 1
+                diag2[col + row] += 1
+        if solve_queens_board(n, queens, queens_per_row, diag1, diag2):
+            success = True
+            break
+
+    if DEBUG and n <= 20:
+        for r in range(n):
+            print(" ".join("*" if queens[c] == r else "_" for c in range(n)))
+        print(f"Time: {time.time() - start:.4f} s")
+
+    # Изходът, който очаква тестовата система:
+    if success:
+        print("[" + ", ".join(str(q) for q in queens) + "]")
+    else:
+        print(-1)
+
+
 if __name__ == "__main__":
-    n = int(input().strip())
-    result = solve_n_queens(n, print_board=True, measure_time=True)
-    print(result)
+    main()

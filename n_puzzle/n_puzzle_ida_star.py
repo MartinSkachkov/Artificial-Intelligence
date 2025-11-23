@@ -53,8 +53,8 @@ def get_neighbors(board, zero_idx, n):
 # 4. Рекурсивна функция за IDA*
 # ---------------------------------------------------
 def dfs(path, g, bound, zero_idx, n, goal, goal_positions, current_h):
-    board = path[-1]
-    f = g + current_h
+    board = path[-1] # текущата дъска
+    f = g + current_h # пътят изминат до момента (всяко ребро е с цена 1) + евристиката на дъската
 
     if f > bound:
         return f, None
@@ -62,11 +62,11 @@ def dfs(path, g, bound, zero_idx, n, goal, goal_positions, current_h):
     if board == goal:
         return True, []
 
-    min_over = float('inf')
+    min_over = float('inf') # пазим най-малкото f което е по-голямо от bound
 
     for new_zero, move in get_neighbors(board, zero_idx, n):
         new_board = list(board)
-        moved_tile = new_board[new_zero]
+        moved_tile = new_board[new_zero] # дава плочката с която сме разменили празната
 
         # разменяме плочките
         new_board[zero_idx], new_board[new_zero] = new_board[new_zero], new_board[zero_idx]
@@ -119,13 +119,10 @@ def ida_star(start, goal, n, goal_positions, zero_pos):
         bound = result
 
 
-# ---------------------------------------------------
-# 6. Главна програма
-# ---------------------------------------------------
 def main():
-    N = int(input().strip())
-    I = int(input().strip())
-    n = int(math.sqrt(N + 1))
+    N = int(input().strip()) # брой плочки
+    I = int(input().strip()) # индексът на нулата в решението
+    n = int(math.sqrt(N + 1)) # редове
 
     tiles = []
     for _ in range(n):
@@ -156,8 +153,5 @@ def main():
             print(move)
 
 
-# ---------------------------------------------------
-# 7. Стартиране
-# ---------------------------------------------------
 if __name__ == "__main__":
     main()

@@ -62,7 +62,7 @@ def get_column_with_max_conflicts(n, queenPosition, conflictRows, conflictPosDia
            cols = [col]
 
     if max_conflicts == 0:
-        return -1
+        return -1 # няма конфликти -> решение
     
     return random.choice(cols)
 
@@ -100,8 +100,7 @@ def update_conflict_arrays(n, new_row, col, queenPosition, conflictRows, conflic
 
 def solve_n_queens(n, max_steps=10_000, restarts=50):
     if n == 1:
-        print("[0]")
-        return
+        return [0]
 
     if n in (2, 3):
         return -1
@@ -119,7 +118,7 @@ def solve_n_queens(n, max_steps=10_000, restarts=50):
         for _ in range(max_steps):
             current_col = get_column_with_max_conflicts(n, queenPosition, conflictRows, conflictPosDiag, conflictNegDiag)
 
-            if current_col == -1:
+            if current_col == -1: # няма повече конфликтни царици -> решение
                 return queenPosition
 
             new_row_with_min_conflicts = get_row_with_min_conflicts(n, current_col, queenPosition, conflictRows, conflictPosDiag, conflictNegDiag)

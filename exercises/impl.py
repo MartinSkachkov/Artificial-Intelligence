@@ -27,6 +27,38 @@ def read_input():
 
     return edges, nodes, start, goal, l
 
+def greedy(edges, nodes, start, goal):
+    pq = []
+    heapq.heappush(pq, (nodes[start], start))
+
+    parents = {start: None}
+    visited = set()
+
+    while pq:
+        heuristic, node = heapq.heappop(pq)
+
+        if node in visited:
+            continue
+        visited.add(node)
+
+        if node == goal:
+            path = []
+            cur = goal
+            while cur is not None:
+                path.append(cur)
+                cur = parents[cur]
+            path.reverse()
+
+            print("Greedy Path:", " -> ".join(path))
+            print("Depth:", len(path) - 1)
+            print("Heuristic(goal):", nodes[goal])
+            print("Closed:", visited)
+            return
+        
+        for nbr, cost in edges.get(node, []):
+            if nbr not in visited and nbr not in parents:
+                parents[nbr] = node
+                heapq.heappush(visited, (nodes[nbr], nbr))
 
 def beam_search(edges, nodes, start, goal, l):
     frontier = [(nodes[start], start)]

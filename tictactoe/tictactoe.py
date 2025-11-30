@@ -32,12 +32,15 @@ def terminal(state):
 def winner(state):
     """Връща победителя (X, O) или None ако няма."""
     lines = [
+        # Редове
         [state[0][0], state[0][1], state[0][2]],
         [state[1][0], state[1][1], state[1][2]],
         [state[2][0], state[2][1], state[2][2]],
+        # Колони
         [state[0][0], state[1][0], state[2][0]],
         [state[0][1], state[1][1], state[2][1]],
         [state[0][2], state[1][2], state[2][2]],
+        # Диагонали
         [state[0][0], state[1][1], state[2][2]],
         [state[0][2], state[1][1], state[2][0]],
     ]
@@ -50,7 +53,7 @@ def value(state, depth=0):
     """Връща стойността на терминално състояние с отчитане на дълбочината."""
     w = winner(state)
     if w == X:
-        return 10 - depth  # По-бърза победа = по-висока стойност
+        return 10 - depth  # По-бърза победа = по-висока стойност | depth = [1, 9]
     elif w == O:
         return depth - 10  # По-бърза победа за O = по-ниска стойност
     return 0  # Равенство
@@ -134,7 +137,7 @@ def print_board(state):
 def judge_mode():
     """Режим JUDGE - връща оптимален ход или -1 за терминална позиция."""
     turn_line = input().strip()
-    turn = turn_line.split()[1]  # X или O
+    turn = turn_line.split()[1]  # TURN X или O
     
     # Четем 7 реда за дъската
     board_lines = [input() for _ in range(7)]
